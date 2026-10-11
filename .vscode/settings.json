@@ -1,0 +1,39 @@
+{
+  "// account guard": "Shown in the window title so you always see which AWS account is in play.",
+  "window.title": "${rootName} — AWS practice (395931907369) ${separator}${activeEditorShort}",
+
+  "files.exclude": {
+    "**/.terraform": true
+  },
+  "search.exclude": {
+    "**/.terraform": true,
+    "**/*.tfstate*": true
+  },
+  "files.associations": {
+    "*.tfvars": "terraform",
+    "*.hcl": "terraform"
+  },
+
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+  "[terraform-vars]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true
+  },
+  "terraform.validate.enable": true,
+
+  "[shellscript]": {
+    "editor.tabSize": 2
+  },
+
+  "aws.profile": "default",
+  "aws.suppressPrompts": {
+    "regionAddAutomatically": true
+  },
+
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
+}

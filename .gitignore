@@ -1,0 +1,41 @@
+# --- Terraform ---
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+.terraformrc
+terraform.rc
+# Lock files SHOULD be committed:
+!.terraform.lock.hcl
+
+# --- Secrets: never commit these ---
+*.tfvars
+*.tfvars.json
+!example.tfvars
+!*.example.tfvars
+.env
+.env.*
+!.env.example
+*.pem
+*.ppk
+*_rsa
+*_rsa.pub
+credentials
+aws_credentials
+*.kubeconfig
+
+# --- Local scratch output ---
+01-cli-scratch/out/
+**/out/
+*.log
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+*.swp
+
+# --- Local private patterns for the pre-commit hook ---
+# Holds real usernames / hostnames / org account ids. MUST stay untracked.
+.secrets-patterns.local

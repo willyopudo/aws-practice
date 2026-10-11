@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# Block commits containing secrets.
+#
+# Scans only what is STAGED, so it is fast and cannot be fooled by a clean
+# working tree. Enabled via `git config core.hooksPath .githooks` (see
+# scripts/install-hooks.sh) — that is why this file lives in the repo rather
+# than in .git/hooks, which is not version controlled.
+#
+# Bypass (use sparingly, and only for a verified false positive):
+#   git commit --no-verify
+set -uo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "✗ pre-commit: gitleaks is not installed." >&2
+  echo "  brew install gitleaks     (or: ./scripts/install-hooks.sh)" >&2
+  echo "  To commit anyway: git commit --no-verify" >&2
+  exit 1
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+# `gitleaks git --staged` scans the staged diff and takes the repo as a
+# positional arg (8.19+). Older builds (<8.18) spell this
+# `gitleaks protect --staged --source <repo>`; support both.
+if gitleaks git --help >/dev/null 2>&1; then
+  scan=(gitleaks git --staged "$repo_root")
+else
+  scan=(gitleaks protect --staged --source "$repo_root")
+fi
+
+"${scan[@]}" \
+  --config "$repo_root/.gitleaks.toml" \
+  --redact \
+  --no-banner \
+  --verbose
+status=$?
+
+if [[ $status -ne 0 ]]; then
+  cat >&2 <<'MSG'
+
+✗ COMMIT BLOCKED — gitleaks found a secret in your staged changes.
+
+  The finding above is redacted; the real value is in your staged diff.
+
+  If it is a REAL secret:
+    1. git restore --staged <file>     # unstage it
+    2. Remove the value from the file; use a variable or env var instead.
+    3. ROTATE IT. Assume anything written to disk is already compromised.
+       AWS keys: IAM → Users → <your admin user> → Security credentials → deactivate.
+
+  If it is a FALSE POSITIVE:
+    Add a narrow allowlist rule to .gitleaks.toml (prefer a path or a specific
+    regex over a broad one), or append  # gitleaks:allow  to that exact line.
+    Do not disable the hook.
+
+MSG
+  exit 1
+fi
+
+echo "✓ gitleaks: no secrets in staged changes"
+
+# --- Local private patterns -------------------------------------------------
+# Strings that are not "secrets" to gitleaks but that you do not want in the
+# repo: real IAM usernames, internal hostnames, colleague names, org account
+# ids. Patterns live in .secrets-patterns.local, which is GITIGNORED — that is
+# the point. Putting them in .gitleaks.toml would commit the very string you
+# are trying to keep out.
+patterns="$repo_root/.secrets-patterns.local"
+
+if [[ -f "$patterns" ]]; then
+  # Added/copied/modified/renamed files only — nothing to check on a deletion.
+  # Plain string + while-read rather than `mapfile`: macOS ships bash 3.2.
+  staged_files=$(git diff --cached --name-only --diff-filter=ACMR)
+  hits=0
+
+  while IFS= read -r pat; do
+    # Skip blanks and # comments.
+    [[ -z "${pat// /}" || "${pat#\#}" != "$pat" ]] && continue
+
+    while IFS= read -r f; do
+      [[ -z "$f" ]] && continue
+      # Read the STAGED blob, not the working-tree file — they can differ.
+      # -I skips binary files. Output is discarded: it contains the string.
+      if git show ":$f" 2>/dev/null | grep -qIEi -- "$pat"; then
+        if [[ $hits -eq 0 ]]; then
+          echo >&2
+          echo "✗ COMMIT BLOCKED — staged changes match a private pattern." >&2
+          echo >&2
+        fi
+        hits=1
+        # Name the pattern and the file, never the matching line.
+        echo "  pattern: $pat" >&2
+        echo "    in: $f" >&2
+      fi
+    done <<< "$staged_files"
+  done < "$patterns"
+
+  if [[ $hits -ne 0 ]]; then
+    cat >&2 <<'MSG'
+
+  Replace the value with a generic placeholder, or move it into a file that
+  .gitignore covers. Patterns are listed in .secrets-patterns.local.
+
+MSG
+    exit 1
+  fi
+  echo "✓ private patterns: no matches in staged changes"
+fi

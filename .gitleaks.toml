@@ -1,0 +1,51 @@
+# gitleaks config for aws-practice
+#
+# Starts from the full built-in ruleset (~170 rules: AWS keys, GitHub/GitLab
+# tokens, private keys, Stripe, Slack, generic high-entropy assignments, ...)
+# and narrows it with allowlists for things that are safe *in this repo*.
+#
+# Keep allowlists tight. A hook that cries wolf is a hook you will disable.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "aws-account-id-in-plaintext"
+description = "AWS account id outside the practice account — likely an OAF org account id leaking into a commit"
+# Matches a 12-digit id in an assignment-ish context, then allowlists the
+# practice account below. Org account ids are not secrets exactly, but they
+# are internal identifiers that should not land in a personal sandbox repo.
+regex = '''(?i)(account[_-]?id|aws_account|owner_id)["'\s]*[:=]["'\s]*(\d{12})'''
+tags = ["aws", "account-id"]
+
+[rules.allowlist]
+regexTarget = "match"
+regexes = [
+  '''395931907369''', # the practice account — intentionally hardcoded as a guard
+]
+
+[allowlist]
+description = "Repo-wide exceptions"
+
+paths = [
+  # Lock files contain provider hashes that look high-entropy but are public.
+  '''\.terraform\.lock\.hcl$''',
+  '''\.terraform/''',
+  # Terraform state is gitignored, but belt-and-braces: never scan (and never
+  # commit) it. If state ever IS staged, .gitignore failed and you have a
+  # bigger problem than a scan result.
+  '''\.tfstate''',
+  # Documentation of what a secret looks like is not a secret.
+  '''^README\.md$''',
+  '''^CLAUDE\.md$''',
+]
+
+regexes = [
+  # The practice account id, wherever it appears. It is a deliberate guardrail
+  # in every providers.tf and in the scripts — not a leak.
+  '''395931907369''',
+  # Obvious placeholders in examples and templates.
+  '''(?i)(example|placeholder|changeme|dummy|fake|your[_-]?)(key|secret|token|password)''',
+  '''AKIAIOSFODNN7EXAMPLE''',                     # AWS's own documented example key
+  '''wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY''', # ditto, the example secret
+]
