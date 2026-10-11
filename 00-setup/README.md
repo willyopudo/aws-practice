@@ -15,7 +15,7 @@ Unlike labs, this is meant to stay up permanently — it costs nothing.
 ../scripts/whoami.sh
 cd terraform
 terraform init
-terraform apply -var="alert_email=wilfred.ouma@oneacrefund.org"
+terraform apply -var="alert_email=user@domain.com"
 ```
 
 AWS sends a confirmation email to that address for the SNS subscription — **click it**,
