@@ -5,7 +5,8 @@ A personal sandbox for learning AWS. Every resource here is disposable.
 ## Account & profile rules — read before any AWS call
 
 - **All practice resources go in account `395931907369`** (IAM user `aws-iam-user`, the
-  `default` profile, region `us-east-1`).
+  `default` profile, region `eu-north-1`). The account is on the AWS Free Plan, whose SCP
+  denies `us-east-1`; revisit this after upgrading to a paid plan.
 - The profiles `acc-dev`, `acc-prod`, `acc-uat`, `acc-qa`, `shared-infra` are **real One Acre
   Fund org accounts**. Never create, modify, or delete anything in them from this directory.
   Read-only inspection is fine if explicitly asked.
@@ -20,7 +21,7 @@ This is a personal account paying real money. Treat cost as a correctness constr
 - **Never** create without a teardown path. Each lab must be destroyable with one command.
 - Flag these before creating them: NAT Gateway (~$32/mo), ALB/NLB (~$16/mo), RDS instances,
   EKS control plane (~$73/mo), Elastic IPs left unattached, `aws-managed` VPC endpoints,
-  anything in a region other than `us-east-1`.
+  anything in a region other than `eu-north-1`.
 - Run `./scripts/sweep.sh` to find leftover billable resources across regions.
 
 ## Layout

@@ -1,7 +1,7 @@
 variable "region" {
-  description = "AWS region for this lab. Stick to us-east-1 unless the lab needs otherwise — it has the widest service coverage and the lowest prices."
+  description = "AWS region for this lab. Stick to eu-north-1 unless the lab needs otherwise — the Free Plan SCP denies us-east-1."
   type        = string
-  default     = "us-east-1"
+  default     = "eu-north-1"
 }
 
 variable "profile" {

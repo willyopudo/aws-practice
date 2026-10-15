@@ -2,7 +2,7 @@
 
 Sandbox for learning AWS hands-on. Terraform + AWS CLI, everything disposable.
 
-**Target account: `395931907369`** (`default` profile, `us-east-1`) — personal, isolated
+**Target account: `395931907369`** (`default` profile, `eu-north-1`) — personal, isolated
 from the One Acre Fund org accounts (`acc-dev`, `acc-prod`, `acc-uat`, `acc-qa`,
 `shared-infra`). Every lab hard-codes `allowed_account_ids`, so Terraform physically
 refuses to apply into an org account.
