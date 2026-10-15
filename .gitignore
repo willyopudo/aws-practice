@@ -39,3 +39,9 @@ aws_credentials
 # --- Local private patterns for the pre-commit hook ---
 # Holds real usernames / hostnames / org account ids. MUST stay untracked.
 .secrets-patterns.local
+
+# --- Agent workflow (scripts/quality-gate.sh, scripts/spec-branch.sh) ---
+.agent/
+coverage/
+.scannerwork/
+.claude/settings.local.json

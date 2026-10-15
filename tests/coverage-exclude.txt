@@ -1,0 +1,10 @@
+# Scripts deliberately outside the coverage gate, one repo-relative path per line.
+# Remove a line once the script has tests. Keep the reason next to each entry.
+scripts/sweep.sh              # read-only AWS inventory; many API calls, low value to mock
+scripts/install-hooks.sh      # one-time machine setup (brew, git config)
+scripts/install-dev-tools.sh  # one-time machine setup (brew)
+scripts/agent-run.sh          # wraps the claude CLI; exercised by running it
+scripts/lib/agent-common.sh   # covered indirectly once quality-gate/spec-branch have tests
+scripts/quality-gate.sh       # workflow tooling — add tests in a follow-up spec
+scripts/spec-branch.sh        # workflow tooling — add tests in a follow-up spec
+scripts/coverage-check.sh     # workflow tooling — add tests in a follow-up spec

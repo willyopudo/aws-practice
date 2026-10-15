@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Fake aws CLI for tests. Never touches AWS.
+# Logs every call (one line of args) to $AWS_MOCK_LOG.
+# Response for `aws <service> <operation> ...` comes from $AWS_MOCK_DIR:
+#   <service>_<operation>.out   printed to stdout (if present)
+#   <service>_<operation>.err   printed to stderr (if present)
+#   <service>_<operation>.exit  exit code (default 0)
+printf '%s\n' "$*" >>"${AWS_MOCK_LOG:-/dev/null}"
+key="${1:-}_${2:-}"
+dir="${AWS_MOCK_DIR:-}"
+[[ -n "$dir" && -f "$dir/$key.out" ]] && cat "$dir/$key.out"
+[[ -n "$dir" && -f "$dir/$key.err" ]] && cat "$dir/$key.err" >&2
+rc=0
+[[ -n "$dir" && -f "$dir/$key.exit" ]] && rc="$(cat "$dir/$key.exit")"
+exit "$rc"

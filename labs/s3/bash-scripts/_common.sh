@@ -4,6 +4,7 @@ set -euo pipefail
 
 COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$COMMON_DIR/../../.." && pwd)"
+# shellcheck disable=SC2034  # read by the scripts that source this file
 LAB_NAME="s3"
 
 die() { echo "✗ $*" >&2; exit 1; }

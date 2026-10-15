@@ -3,8 +3,7 @@
 Sandbox for learning AWS hands-on. Terraform + AWS CLI, everything disposable.
 
 **Target account: `395931907369`** (`default` profile, `eu-north-1`) — personal, isolated
-from the One Acre Fund org accounts (`acc-dev`, `acc-prod`, `acc-uat`, `acc-qa`,
-`shared-infra`). Every lab hard-codes `allowed_account_ids`, so Terraform physically
+from the other org accounts. Every lab hard-codes `allowed_account_ids`, so Terraform physically
 refuses to apply into an org account.
 
 ## First run
@@ -50,6 +49,20 @@ scripts/         whoami / sweep / new-lab
 | `./scripts/new-lab.sh <name>` | Scaffolds a numbered lab from the template. |
 | `./scripts/install-hooks.sh` | Enables the gitleaks pre-commit hook. Run once after cloning. |
 
+## Agentic workflow
+
+Claude Code implements a spec on its own branch and iterates until the quality gate passes
+(shellcheck, tflint, bats, ≥80% coverage, SonarCloud). It then notifies you and waits for
+approval before it commits, pushes and opens a PR. Details: `notes/agentic-workflow.md`.
+
+```bash
+./scripts/install-dev-tools.sh                 # one-time: gh, shellcheck, bats, tflint
+cp specs/_template.md specs/002-my-change.md   # write the spec
+# in Claude Code:   /spec-run specs/002-my-change.md
+./scripts/agent-run.sh specs/002-my-change.md  # or headless, with turn/budget caps
+./scripts/quality-gate.sh                      # the gate on its own
+```
+
 ## Secret scanning
 
 A **gitleaks pre-commit hook** blocks any commit containing a secret. It scans only the
@@ -71,7 +84,7 @@ and AWS's own documented example keys.
 ### Private patterns
 
 Some things are not "secrets" to gitleaks but still should not be committed: real IAM
-usernames, internal hostnames, One Acre Fund org account ids. Those go in
+usernames, internal hostnames, other org account ids. Those go in
 **`.secrets-patterns.local`** — one regex per line, **gitignored**. The hook blocks any
 staged file matching one, and reports the *file* without echoing the matching line.
 

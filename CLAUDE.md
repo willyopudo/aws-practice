@@ -66,3 +66,11 @@ This is a personal account paying real money. Treat cost as a correctness constr
   The CLI builds intuition; Terraform builds the habit.
 - Put the "why" in `notes/<service>.md`, not in code comments.
 - After finishing a lab, run `terraform destroy` and say so explicitly in the summary.
+
+## Agentic workflow (spec runs)
+
+- Specs live in `specs/` (copy `specs/_template.md`). Run one with `/spec-run specs/<file>.md`,
+  or headless with `scripts/agent-run.sh specs/<file>.md`. The loop is in `.claude/skills/spec-run/`.
+- Every spec runs on its own branch (`scripts/spec-branch.sh`); never commit to `main`.
+- Done means `scripts/quality-gate.sh` passes. Read its summary, not raw tool output.
+- Commit, push and PR need explicit user approval. Tests never call real AWS (`tests/helpers/`).

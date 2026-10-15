@@ -1,0 +1,3 @@
+# Used by `make lint`, the fast-lint hook and editors.
+external-sources=true
+source-path=SCRIPTDIR
