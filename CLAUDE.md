@@ -74,3 +74,8 @@ This is a personal account paying real money. Treat cost as a correctness constr
 - Every spec runs on its own branch (`scripts/spec-branch.sh`); never commit to `main`.
 - Done means `scripts/quality-gate.sh` passes. Read its summary, not raw tool output.
 - Commit, push and PR need explicit user approval. Tests never call real AWS (`tests/helpers/`).
+
+## Attribution Guidelines
+
+- NEVER include Claude/AI-related comments, signatures, or "Co-Authored-By" attributions in commit messages or PR descriptions.
+
