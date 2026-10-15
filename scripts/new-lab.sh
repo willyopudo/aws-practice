@@ -22,7 +22,9 @@ fi
 
 cp -R "$root/labs/_template" "$dir"
 # Substitute the lab name into the template placeholders.
-find "$dir" -type f -print0 | xargs -0 sed -i '' "s/__LAB_NAME__/${seq}-${name}/g"
+# `-i.bak` is the in-place form both BSD (macOS) and GNU sed accept; drop the backups after.
+find "$dir" -type f -print0 | xargs -0 sed -i.bak "s/__LAB_NAME__/${seq}-${name}/g"
+find "$dir" -type f -name '*.bak' -delete
 
 echo "✓ Created labs/${seq}-${name}"
 echo
