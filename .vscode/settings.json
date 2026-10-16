@@ -35,5 +35,9 @@
   },
 
   "files.trimTrailingWhitespace": true,
-  "files.insertFinalNewline": true
+  "files.insertFinalNewline": true,
+  "sonarlint.connectedMode.project": {
+    "connectionId": "arisappsorg",
+    "projectKey": "arisappsorg_aws-practice"
+  }
 }
