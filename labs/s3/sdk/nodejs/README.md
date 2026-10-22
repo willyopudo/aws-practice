@@ -20,7 +20,7 @@ node cli.js list-objects my-practice-bucket [prefix]
 node cli.js put-object my-practice-bucket ./file.txt [key]
 node cli.js sync ./some-dir my-practice-bucket [prefix]
 node cli.js delete-object my-practice-bucket file.txt
-node cli.js delete-bucket my-practice-bucket
+node cli.js delete-bucket my-practice-bucket [--force]   # --force empties it first
 ```
 Usage errors exit 1; SDK errors exit 2.
 
@@ -35,4 +35,4 @@ directory path on the machine running the server.
 `npm test` — SDK mocked, no AWS calls. Coverage: `node --test --experimental-test-coverage`.
 
 ## Teardown
-Delete any bucket you create (`delete-bucket`, after emptying it). Nothing else is provisioned.
+Delete any bucket you create (`delete-bucket --force` empties it first). Nothing else is provisioned.
