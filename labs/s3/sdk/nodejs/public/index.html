@@ -26,6 +26,7 @@
   <input id="new-bucket" placeholder="new bucket name">
   <button id="create-bucket">Create</button>
   <button id="delete-bucket">Delete</button>
+  <label><input id="force" type="checkbox"> force (delete all objects first)</label>
 </fieldset>
 
 <fieldset>
@@ -78,7 +79,9 @@ $('list-buckets').onclick = () => call('GET', '/api/buckets');
 $('create-bucket').onclick = () => call('POST', '/api/buckets', { name: val('new-bucket') });
 $('delete-bucket').onclick = () => {
   const name = val('new-bucket');
-  if (name && confirm(`Delete bucket "${name}"?`)) call('DELETE', `/api/buckets/${enc(name)}`);
+  const force = $('force').checked;
+  const msg = force ? `Delete ALL objects in "${name}" and then the bucket?` : `Delete bucket "${name}"?`;
+  if (name && confirm(msg)) call('DELETE', `/api/buckets/${enc(name)}${force ? '?force=true' : ''}`);
 };
 $('list-objects').onclick = () => call('GET', `${objectsPath()}?prefix=${enc(val('prefix'))}`);
 $('upload').onclick = () => {

@@ -42,7 +42,7 @@ async function route(client, req, url) {
     if (method === 'GET') return { buckets: await s3.listBuckets(client) };
     if (method === 'POST') return s3.createBucket(client, need((await readJson(req)).name, 'name'));
   } else if (m && !m[2]) {
-    if (method === 'DELETE') return s3.deleteBucket(client, bucket);
+    if (method === 'DELETE') return s3.deleteBucket(client, bucket, { force: searchParams.get('force') === 'true' });
   } else if (m) {
     if (method === 'GET') return { objects: await s3.listObjects(client, bucket, searchParams.get('prefix') ?? undefined) };
     if (method === 'PUT') {

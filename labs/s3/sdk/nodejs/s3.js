@@ -1,10 +1,14 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import {
+  AbortMultipartUploadCommand,
   CreateBucketCommand,
   DeleteBucketCommand,
+  DeleteObjectsCommand,
   DeleteObjectCommand,
   ListBucketsCommand,
+  ListMultipartUploadsCommand,
+  ListObjectVersionsCommand,
   ListObjectsV2Command,
   PutObjectCommand,
 } from '@aws-sdk/client-s3';
@@ -24,11 +28,6 @@ export async function createBucket(client, bucket) {
   return { bucket, region };
 }
 
-export async function deleteBucket(client, bucket) {
-  await client.send(new DeleteBucketCommand({ Bucket: bucket }));
-  return { bucket };
-}
-
 async function listAll(client, bucket, prefix) {
   const objects = [];
   let token;
@@ -40,6 +39,63 @@ async function listAll(client, bucket, prefix) {
     token = res.IsTruncated ? res.NextContinuationToken : undefined;
   } while (token);
   return objects;
+}
+
+// Every version and delete marker in the bucket, following pagination.
+async function listVersions(client, bucket) {
+  const items = [];
+  let keyMarker;
+  let versionIdMarker;
+  do {
+    const res = await client.send(
+      new ListObjectVersionsCommand({ Bucket: bucket, KeyMarker: keyMarker, VersionIdMarker: versionIdMarker }),
+    );
+    for (const v of [...(res.Versions ?? []), ...(res.DeleteMarkers ?? [])]) {
+      items.push({ Key: v.Key, VersionId: v.VersionId });
+    }
+    keyMarker = res.IsTruncated ? res.NextKeyMarker : undefined;
+    versionIdMarker = res.IsTruncated ? res.NextVersionIdMarker : undefined;
+  } while (keyMarker || versionIdMarker);
+  return items;
+}
+
+async function abortUploads(client, bucket) {
+  let aborted = 0;
+  let keyMarker;
+  let uploadIdMarker;
+  do {
+    const res = await client.send(
+      new ListMultipartUploadsCommand({ Bucket: bucket, KeyMarker: keyMarker, UploadIdMarker: uploadIdMarker }),
+    );
+    for (const u of res.Uploads ?? []) {
+      await client.send(new AbortMultipartUploadCommand({ Bucket: bucket, Key: u.Key, UploadId: u.UploadId }));
+      aborted++;
+    }
+    keyMarker = res.IsTruncated ? res.NextKeyMarker : undefined;
+    uploadIdMarker = res.IsTruncated ? res.NextUploadIdMarker : undefined;
+  } while (keyMarker || uploadIdMarker);
+  return aborted;
+}
+
+// With { force: true }, empties the bucket first: all object versions, delete markers and
+// incomplete multipart uploads. Without versioning, ListObjectVersions returns the plain objects.
+export async function deleteBucket(client, bucket, { force = false } = {}) {
+  let deleted = 0;
+  let aborted = 0;
+  if (force) {
+    const items = await listVersions(client, bucket);
+    for (let i = 0; i < items.length; i += 1000) {
+      const batch = items.slice(i, i + 1000);
+      const res = await client.send(
+        new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: batch, Quiet: true } }),
+      );
+      if (res.Errors?.length) throw new Error(`Failed to delete ${res.Errors[0].Key}: ${res.Errors[0].Message}`);
+      deleted += batch.length;
+    }
+    aborted = await abortUploads(client, bucket);
+  }
+  await client.send(new DeleteBucketCommand({ Bucket: bucket }));
+  return force ? { bucket, deleted, abortedUploads: aborted } : { bucket };
 }
 
 export async function listObjects(client, bucket, prefix) {

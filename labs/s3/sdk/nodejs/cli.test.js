@@ -7,8 +7,11 @@ import { mockClient } from 'aws-sdk-client-mock';
 import {
   CreateBucketCommand,
   DeleteBucketCommand,
+  DeleteObjectsCommand,
   DeleteObjectCommand,
   ListBucketsCommand,
+  ListMultipartUploadsCommand,
+  ListObjectVersionsCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
@@ -44,6 +47,17 @@ test('SDK error prints message to stderr, exit 2', async () => {
   mock.on(ListBucketsCommand).rejects(new Error('denied'));
   assert.equal(await exec('list-buckets'), 2);
   assert.deepEqual(err, ['denied']);
+});
+
+test('delete-bucket --force (flag in any position) empties then deletes', async () => {
+  mock.on(ListObjectVersionsCommand).resolves({ Versions: [{ Key: 'k', VersionId: 'v' }] });
+  mock.on(ListMultipartUploadsCommand).resolves({});
+  mock.on(DeleteObjectsCommand).resolves({});
+  mock.on(DeleteBucketCommand).resolves({});
+  assert.equal(await exec('delete-bucket', '--force', 'b'), 0);
+  assert.equal(mock.commandCalls(DeleteObjectsCommand).length, 1);
+  assert.deepEqual(JSON.parse(out[0]), { bucket: 'b', deleted: 1, abortedUploads: 0 });
+  assert.equal(await exec('create-bucket', 'b', '--force'), 1);
 });
 
 test('every subcommand dispatches and prints to stdout', async () => {

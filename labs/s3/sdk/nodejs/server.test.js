@@ -7,8 +7,11 @@ import { mockClient } from 'aws-sdk-client-mock';
 import {
   CreateBucketCommand,
   DeleteBucketCommand,
+  DeleteObjectsCommand,
   DeleteObjectCommand,
   ListBucketsCommand,
+  ListMultipartUploadsCommand,
+  ListObjectVersionsCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
@@ -69,6 +72,17 @@ test('DELETE /api/buckets/:bucket: 200, 400, 500', async () => {
   assert.equal((await call('DELETE', '/api/buckets/%E0%A4%A')).status, 400); // malformed escape
   mock.on(DeleteBucketCommand).rejects(new Error('not empty'));
   assert.deepEqual(await call('DELETE', '/api/buckets/b'), { status: 500, json: { error: 'not empty' } });
+});
+
+test('DELETE /api/buckets/:bucket?force=true empties the bucket first', async () => {
+  mock.on(ListObjectVersionsCommand).resolves({ Versions: [{ Key: 'k', VersionId: 'v' }] });
+  mock.on(ListMultipartUploadsCommand).resolves({});
+  mock.on(DeleteObjectsCommand).resolves({});
+  mock.on(DeleteBucketCommand).resolves({});
+  assert.deepEqual(await call('DELETE', '/api/buckets/b?force=true'), { status: 200, json: { bucket: 'b', deleted: 1, abortedUploads: 0 } });
+  assert.equal(mock.commandCalls(DeleteObjectsCommand).length, 1);
+  mock.on(DeleteObjectsCommand).rejects(new Error('denied'));
+  assert.equal((await call('DELETE', '/api/buckets/b?force=true')).status, 500);
 });
 
 test('GET /api/buckets/:bucket/objects: 200 with prefix, 500', async () => {

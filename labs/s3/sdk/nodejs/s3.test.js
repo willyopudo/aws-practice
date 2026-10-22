@@ -7,8 +7,12 @@ import { mockClient } from 'aws-sdk-client-mock';
 import {
   CreateBucketCommand,
   DeleteBucketCommand,
+  DeleteObjectsCommand,
   DeleteObjectCommand,
   ListBucketsCommand,
+  ListMultipartUploadsCommand,
+  ListObjectVersionsCommand,
+  AbortMultipartUploadCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
@@ -64,6 +68,51 @@ test('deleteBucket happy path and failure', async () => {
   assert.deepEqual(await s3.deleteBucket(client, 'b'), { bucket: 'b' });
   mock.on(DeleteBucketCommand).rejects(new Error('not empty'));
   await assert.rejects(s3.deleteBucket(client, 'b'), /not empty/);
+});
+
+test('deleteBucket --force removes versions, markers and multipart uploads, in batches', async () => {
+  const Versions = Array.from({ length: 1000 }, (_, i) => ({ Key: `k${i}`, VersionId: `v${i}` }));
+  mock
+    .on(ListObjectVersionsCommand)
+    .resolvesOnce({ Versions, IsTruncated: true, NextKeyMarker: 'k999', NextVersionIdMarker: 'v999' })
+    .resolvesOnce({ Versions: [{ Key: 'a', VersionId: 'v' }], DeleteMarkers: [{ Key: 'a', VersionId: 'dm' }] });
+  mock.on(ListMultipartUploadsCommand).resolves({ Uploads: [{ Key: 'big', UploadId: 'u1' }] });
+  mock.on(AbortMultipartUploadCommand).resolves({});
+  mock.on(DeleteObjectsCommand).resolves({});
+  mock.on(DeleteBucketCommand).resolves({});
+  assert.deepEqual(await s3.deleteBucket(client, 'b', { force: true }), { bucket: 'b', deleted: 1002, abortedUploads: 1 });
+  const calls = mock.commandCalls(DeleteObjectsCommand).map((c) => c.args[0].input.Delete.Objects);
+  assert.deepEqual(calls.map((o) => o.length), [1000, 2]);
+  assert.deepEqual(calls[1][1], { Key: 'a', VersionId: 'dm' });
+  assert.equal(mock.commandCalls(ListObjectVersionsCommand)[1].args[0].input.VersionIdMarker, 'v999');
+  assert.equal(mock.commandCalls(AbortMultipartUploadCommand)[0].args[0].input.UploadId, 'u1');
+  assert.equal(mock.commandCalls(DeleteBucketCommand).length, 1);
+});
+
+test('deleteBucket --force follows multipart upload pagination', async () => {
+  mock.on(ListObjectVersionsCommand).resolves({});
+  mock
+    .on(ListMultipartUploadsCommand)
+    .resolvesOnce({ Uploads: [{ Key: 'a', UploadId: '1' }], IsTruncated: true, NextKeyMarker: 'a', NextUploadIdMarker: '1' })
+    .resolvesOnce({ Uploads: [{ Key: 'b', UploadId: '2' }] });
+  mock.on(AbortMultipartUploadCommand).resolves({});
+  mock.on(DeleteBucketCommand).resolves({});
+  const r = await s3.deleteBucket(client, 'b', { force: true });
+  assert.equal(r.abortedUploads, 2);
+  assert.equal(mock.commandCalls(DeleteObjectsCommand).length, 0);
+});
+
+test('deleteBucket without force never lists or empties', async () => {
+  mock.on(DeleteBucketCommand).resolves({});
+  await s3.deleteBucket(client, 'b');
+  assert.equal(mock.commandCalls(ListObjectVersionsCommand).length, 0);
+});
+
+test('deleteBucket --force fails and keeps the bucket if object deletion reports errors', async () => {
+  mock.on(ListObjectVersionsCommand).resolves({ Versions: [{ Key: 'k', VersionId: 'v' }] });
+  mock.on(DeleteObjectsCommand).resolves({ Errors: [{ Key: 'k', Message: 'denied' }] });
+  await assert.rejects(s3.deleteBucket(client, 'b', { force: true }), /Failed to delete k: denied/);
+  assert.equal(mock.commandCalls(DeleteBucketCommand).length, 0);
 });
 
 test('listObjects follows pagination', async () => {
