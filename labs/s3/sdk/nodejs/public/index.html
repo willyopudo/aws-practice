@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S3 lab</title>
+<style>
+  body { font: 15px/1.4 system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+  fieldset { margin-bottom: 1rem; }
+  input, button { font: inherit; padding: .3rem .5rem; margin: .15rem 0; }
+  pre { background: #f4f4f4; padding: 1rem; min-height: 6rem; overflow: auto; white-space: pre-wrap; }
+  pre.error { background: #fde8e8; color: #8a1c1c; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #1b1b1b; color: #eee; }
+    pre { background: #2a2a2a; }
+    pre.error { background: #4a1f1f; color: #ffb4b4; }
+  }
+</style>
+</head>
+<body>
+<h1>S3 lab</h1>
+
+<fieldset>
+  <legend>Buckets</legend>
+  <button id="list-buckets">List buckets</button><br>
+  <input id="new-bucket" placeholder="new bucket name">
+  <button id="create-bucket">Create</button>
+  <button id="delete-bucket">Delete</button>
+</fieldset>
+
+<fieldset>
+  <legend>Objects</legend>
+  <input id="bucket" placeholder="bucket">
+  <input id="prefix" placeholder="prefix (optional)">
+  <button id="list-objects">List objects</button><br>
+  <input id="file" type="file">
+  <button id="upload">Upload</button><br>
+  <input id="key" placeholder="object key">
+  <button id="delete-object">Delete object</button>
+</fieldset>
+
+<fieldset>
+  <legend>Sync (server-side directory → bucket)</legend>
+  <input id="sync-dir" placeholder="/path/on/server/machine">
+  <input id="sync-prefix" placeholder="prefix (optional)">
+  <button id="sync">Sync</button>
+</fieldset>
+
+<pre id="output">Ready.</pre>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const out = $('output');
+
+async function call(method, path, body, raw) {
+  out.className = '';
+  out.textContent = 'Working…';
+  try {
+    const res = await fetch(path, {
+      method,
+      headers: body && !raw ? { 'Content-Type': 'application/json' } : {},
+      body: body === undefined ? undefined : raw ? body : JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    out.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    out.className = 'error';
+    out.textContent = e.message;
+  }
+}
+
+const enc = encodeURIComponent;
+const val = (id) => $(id).value.trim();
+const objectsPath = () => `/api/buckets/${enc(val('bucket'))}/objects`;
+
+$('list-buckets').onclick = () => call('GET', '/api/buckets');
+$('create-bucket').onclick = () => call('POST', '/api/buckets', { name: val('new-bucket') });
+$('delete-bucket').onclick = () => {
+  const name = val('new-bucket');
+  if (name && confirm(`Delete bucket "${name}"?`)) call('DELETE', `/api/buckets/${enc(name)}`);
+};
+$('list-objects').onclick = () => call('GET', `${objectsPath()}?prefix=${enc(val('prefix'))}`);
+$('upload').onclick = () => {
+  const file = $('file').files[0];
+  if (!file) { out.className = 'error'; out.textContent = 'Choose a file first'; return; }
+  call('PUT', `${objectsPath()}?key=${enc(val('key') || file.name)}`, file, true);
+};
+$('delete-object').onclick = () => call('DELETE', `${objectsPath()}?key=${enc(val('key'))}`);
+$('sync').onclick = () => call('POST', '/api/sync', { dir: val('sync-dir'), bucket: val('bucket'), prefix: val('sync-prefix') });
+</script>
+</body>
+</html>
