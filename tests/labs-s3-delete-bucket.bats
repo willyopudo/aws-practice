@@ -3,7 +3,7 @@ load helpers/common
 
 setup() {
   setup_aws_mock
-  SCRIPT="$REPO_ROOT/labs/s3/bash-scripts/delete-bucket.sh"
+  SCRIPT="$REPO_ROOT/labs/01-s3/bash-scripts/delete-bucket.sh"
 }
 
 # list-object-versions returns one page of objects, then an empty page.

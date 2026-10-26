@@ -3,7 +3,7 @@ load helpers/common
 
 setup() {
   setup_aws_mock
-  SCRIPT="$REPO_ROOT/labs/s3/bash-scripts/create-bucket.sh"
+  SCRIPT="$REPO_ROOT/labs/01-s3/bash-scripts/create-bucket.sh"
 }
 
 @test "creates bucket with LocationConstraint outside us-east-1 and tags it" {
