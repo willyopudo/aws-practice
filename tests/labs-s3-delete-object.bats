@@ -3,7 +3,7 @@ load helpers/common
 
 setup() {
   setup_aws_mock
-  SCRIPT="$REPO_ROOT/labs/s3/bash-scripts/delete-object.sh"
+  SCRIPT="$REPO_ROOT/labs/01-s3/bash-scripts/delete-object.sh"
 }
 
 @test "deletes an object" {

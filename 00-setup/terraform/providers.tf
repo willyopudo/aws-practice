@@ -15,7 +15,7 @@ provider "aws" {
 
   # Guard: refuse to run against any account other than the practice one.
   # This is the single most important line in the file — it makes it impossible
-  # to apply a lab into a One Acre Fund org account by mistake.
+  # to apply a lab into a any org account by mistake.
   allowed_account_ids = [var.practice_account_id]
 
   # Every resource that supports tagging gets these automatically.

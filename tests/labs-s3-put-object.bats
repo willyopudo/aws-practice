@@ -3,7 +3,7 @@ load helpers/common
 
 setup() {
   setup_aws_mock
-  SCRIPT="$REPO_ROOT/labs/s3/bash-scripts/put-object.sh"
+  SCRIPT="$REPO_ROOT/labs/01-s3/bash-scripts/put-object.sh"
   FILE="$BATS_TEST_TMPDIR/hello.txt"
   echo hello >"$FILE"
 }
