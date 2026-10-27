@@ -1,4 +1,5 @@
 # Quality gates. `make check` is what the agent loop and CI both run.
+# SonarCloud is not part of `check`: CI runs it on PR / push to main. `make sonar` runs it on demand.
 # Run scripts/quality-gate.sh for a compact summary instead of raw output.
 SHELL := /bin/bash
 .SHELLFLAGS := -euo pipefail -c
@@ -14,9 +15,9 @@ SONAR_IMAGE  := sonarsource/sonar-scanner-cli:11
 TFLINT       := $(shell command -v tflint || echo docker run --rm -v "$(CURDIR):/data" -w /data ghcr.io/terraform-linters/tflint:v0.59.1)
 BRANCH       := $(shell git branch --show-current)
 
-.PHONY: check lint test coverage sonar clean
+.PHONY: check lint test coverage sonar sonar-local sonar-local-down clean
 
-check: lint test coverage sonar
+check: lint test coverage
 
 lint:
 	shellcheck -x -S warning $(SH_FILES)
@@ -45,6 +46,13 @@ sonar:
 	@[[ -n "$${SONAR_TOKEN:-}" ]] || { echo "SONAR_TOKEN not set"; exit 3; }
 	docker run --rm -e SONAR_TOKEN -v "$(CURDIR):/usr/src" $(SONAR_IMAGE) \
 	  -Dsonar.qualitygate.wait=true -Dsonar.branch.name=$(BRANCH)
+
+# Local SonarQube Community in Docker; no SonarCloud, no SONAR_TOKEN needed.
+sonar-local:
+	scripts/sonar-local.sh
+
+sonar-local-down:
+	scripts/sonar-local.sh --down
 
 clean:
 	rm -rf coverage .scannerwork

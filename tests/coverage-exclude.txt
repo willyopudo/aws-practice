@@ -8,3 +8,4 @@ scripts/lib/agent-common.sh   # covered indirectly once quality-gate/spec-branch
 scripts/quality-gate.sh       # workflow tooling — add tests in a follow-up spec
 scripts/spec-branch.sh        # workflow tooling — add tests in a follow-up spec
 scripts/coverage-check.sh     # workflow tooling — add tests in a follow-up spec
+scripts/sonar-local.sh        # drives Docker + a live SonarQube server; exercised by running it

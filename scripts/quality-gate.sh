@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run every quality gate and print a compact summary instead of raw tool output.
-#   scripts/quality-gate.sh            # lint, test, coverage, sonar
-#   scripts/quality-gate.sh --no-sonar # skip SonarCloud (e.g. no network / no token)
+#   scripts/quality-gate.sh         # lint, test, coverage (SonarCloud runs in CI on PR / push to main)
+#   scripts/quality-gate.sh --sonar # also run SonarCloud locally (needs SONAR_TOKEN)
 # Full logs: .agent/logs/<stage>.log. Exit 0 only if every non-skipped stage passes.
 # While a spec run is active, each run counts as one iteration against its limit.
 set -uo pipefail
@@ -11,8 +11,8 @@ EXCERPT_LINES=40
 cd "$AGENT_ROOT" || exit 1
 mkdir -p "$AGENT_DIR/logs"
 
-sonar=1
-[[ "${1:-}" == "--no-sonar" ]] && sonar=0
+sonar=0
+[[ "${1:-}" == "--sonar" ]] && sonar=1
 
 spec="$(active_get spec)"
 coverage_min=80

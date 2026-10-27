@@ -23,7 +23,7 @@
 <fieldset>
   <legend>Buckets</legend>
   <button id="list-buckets">List buckets</button><br>
-  <input id="new-bucket" placeholder="new bucket name">
+  <input id="new-bucket" placeholder="new bucket name" aria-label="New bucket name">
   <button id="create-bucket">Create</button>
   <button id="delete-bucket">Delete</button>
   <label><input id="force" type="checkbox"> force (delete all objects first)</label>
@@ -31,19 +31,19 @@
 
 <fieldset>
   <legend>Objects</legend>
-  <input id="bucket" placeholder="bucket">
-  <input id="prefix" placeholder="prefix (optional)">
+  <input id="bucket" placeholder="bucket" aria-label="Bucket">
+  <input id="prefix" placeholder="prefix (optional)" aria-label="Prefix">
   <button id="list-objects">List objects</button><br>
-  <input id="file" type="file">
+  <input id="file" type="file" aria-label="File to upload">
   <button id="upload">Upload</button><br>
-  <input id="key" placeholder="object key">
+  <input id="key" placeholder="object key" aria-label="Object key">
   <button id="delete-object">Delete object</button>
 </fieldset>
 
 <fieldset>
   <legend>Sync (server-side directory → bucket)</legend>
-  <input id="sync-dir" placeholder="/path/on/server/machine">
-  <input id="sync-prefix" placeholder="prefix (optional)">
+  <input id="sync-dir" placeholder="/path/on/server/machine" aria-label="Server directory">
+  <input id="sync-prefix" placeholder="prefix (optional)" aria-label="Sync prefix">
   <button id="sync">Sync</button>
 </fieldset>
 

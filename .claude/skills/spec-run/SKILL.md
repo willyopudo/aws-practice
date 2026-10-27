@@ -1,6 +1,6 @@
 ---
 name: spec-run
-description: Implement a spec from specs/ end to end — own branch, iterate until the quality gate passes (tests, coverage, lint, SonarCloud), notify, wait for approval, then commit, push and open a PR. Use when the user runs /spec-run or asks to implement a spec file.
+description: Implement a spec from specs/ end to end — own branch, iterate until the quality gate passes (tests, coverage, lint; SonarCloud runs in CI), notify, wait for approval, then commit, push and open a PR. Use when the user runs /spec-run or asks to implement a spec file.
 argument-hint: specs/NNN-name.md
 ---
 
@@ -34,7 +34,8 @@ Run `scripts/quality-gate.sh`. It prints one summary line plus a short excerpt.
 - **FAIL**: fix only what it reports, then re-run. Read `.agent/logs/<stage>.log` only if
   the excerpt isn't enough. If even that is unclear, ask the `gate-triage` subagent.
 - **ITERATION LIMIT REACHED**: stop fixing. Go to step 6 and report the remaining failures.
-- If `sonar: SKIPPED` because `SONAR_TOKEN` is unset, say so in the report. CI still runs Sonar.
+- `sonar: SKIPPED` is expected: SonarCloud runs in CI on the PR. Use `make sonar-local` for a
+  quick local check if needed.
 
 ## 5. Self-check
 - Tick each acceptance criterion in the spec, with one line of evidence each.

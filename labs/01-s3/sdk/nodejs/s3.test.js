@@ -169,7 +169,7 @@ test('syncDir uploads missing/different-size files and skips the rest', async ()
   });
   mock.on(PutObjectCommand).resolves({});
   assert.deepEqual(await s3.syncDir(client, dir, 'b', 'pre'), { uploaded: 2, skipped: 1 });
-  const keys = mock.commandCalls(PutObjectCommand).map((c) => c.args[0].input.Key).sort();
+  const keys = mock.commandCalls(PutObjectCommand).map((c) => c.args[0].input.Key).sort((a, b) => a.localeCompare(b));
   assert.deepEqual(keys, ['pre/changed.txt', 'pre/sub/new.txt']);
   assert.equal(mock.commandCalls(DeleteObjectCommand).length, 0);
 });
