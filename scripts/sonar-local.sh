@@ -13,7 +13,9 @@ PORT="${SONAR_LOCAL_PORT:-9000}"
 URL="http://localhost:$PORT"
 # Set SONAR_LOCAL_PASSWORD if you changed the admin password in the UI.
 # Falls back to SonarQube's documented first-run default.
-AUTH="admin:${SONAR_LOCAL_PASSWORD:-admin}"
+DEFAULT_PASSWORD="admin"
+DEFAULT_AUTH="admin:$DEFAULT_PASSWORD"
+AUTH="admin:${SONAR_LOCAL_PASSWORD:-$DEFAULT_PASSWORD}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if [[ "${1:-}" == "--down" ]]; then
@@ -38,6 +40,13 @@ for _ in $(seq 1 90); do
   sleep 3
 done
 curl -fsS "$URL/api/system/status" | grep -q '"status":"UP"' || { echo "✗ SonarQube did not come up" >&2; exit 1; }
+
+auth_ok() { curl -fsS -u "$1" "$URL/api/authentication/validate" | grep -q '"valid":true'; }
+if [[ -n "${SONAR_LOCAL_PASSWORD:-}" ]] && ! auth_ok "$AUTH" && auth_ok "$DEFAULT_AUTH"; then
+  curl -fsS -u "$DEFAULT_AUTH" -X POST "$URL/api/users/change_password" \
+    --data-urlencode "login=admin" --data-urlencode "previousPassword=$DEFAULT_PASSWORD" \
+    --data-urlencode "password=$SONAR_LOCAL_PASSWORD" >/dev/null
+fi
 
 # Short-lived token per run, held in memory only and revoked on exit.
 token_name="run-$(date +%s)"

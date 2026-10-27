@@ -1,5 +1,6 @@
 # Quality gates. `make check` is what the agent loop and CI both run.
-# SonarCloud is not part of `check`: CI runs it on PR / push to main. `make sonar` runs it on demand.
+# `check` runs Sonar against a local SonarQube container (started on demand). SonarCloud is not
+# part of `check`: CI runs it on PR / push to main, and `make sonar` runs it on demand.
 # Run scripts/quality-gate.sh for a compact summary instead of raw output.
 SHELL := /bin/bash
 .SHELLFLAGS := -euo pipefail -c
@@ -17,7 +18,7 @@ BRANCH       := $(shell git branch --show-current)
 
 .PHONY: check lint test coverage sonar sonar-local sonar-local-down clean
 
-check: lint test coverage
+check: lint test coverage sonar-local
 
 lint:
 	shellcheck -x -S warning $(SH_FILES)

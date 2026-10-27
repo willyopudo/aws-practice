@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Run every quality gate and print a compact summary instead of raw tool output.
-#   scripts/quality-gate.sh         # lint, test, coverage (SonarCloud runs in CI on PR / push to main)
+#   scripts/quality-gate.sh         # lint, test, coverage, sonar-local (SonarCloud runs in CI)
 #   scripts/quality-gate.sh --sonar # also run SonarCloud locally (needs SONAR_TOKEN)
+# sonar-local starts a local SonarQube container if needed; see scripts/sonar-local.sh.
 # Full logs: .agent/logs/<stage>.log. Exit 0 only if every non-skipped stage passes.
 # While a spec run is active, each run counts as one iteration against its limit.
 set -uo pipefail
@@ -24,7 +25,7 @@ fi
 
 summary=()
 first_fail=""
-for stage in lint test coverage sonar; do
+for stage in lint test coverage sonar-local sonar; do
   if [[ "$stage" == "sonar" && $sonar -eq 0 ]]; then
     summary+=("sonar: SKIPPED"); continue
   fi
