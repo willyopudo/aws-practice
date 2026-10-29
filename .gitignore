@@ -26,6 +26,10 @@ credentials
 aws_credentials
 *.kubeconfig
 
+# --- Node / CDK (any depth) ---
+node_modules/
+cdk.out/
+
 # --- Local scratch output ---
 01-cli-scratch/out/
 **/out/

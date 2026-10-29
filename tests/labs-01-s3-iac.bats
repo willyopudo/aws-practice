@@ -50,5 +50,5 @@ setup() {
 
 @test "no credentials or tfvars in the lab" {
   [ -z "$(find "$REPO_ROOT/labs/01-s3/iac" -name '*.tfvars*' -not -path '*/.terraform/*')" ]
-  ! grep -rEq 'AKIA[0-9A-Z]{16}' "$REPO_ROOT/labs/01-s3/iac" --exclude-dir=.terraform
+  ! grep -rEq 'AKIA[0-9A-Z]{16}' "$REPO_ROOT/labs/01-s3/iac" --exclude-dir=.terraform --exclude-dir=node_modules --exclude-dir=cdk.out
 }
