@@ -30,6 +30,12 @@ aws_credentials
 node_modules/
 cdk.out/
 
+# --- Python (any depth) ---
+.venv/
+__pycache__/
+.pytest_cache/
+.coverage
+
 # --- Local scratch output ---
 01-cli-scratch/out/
 **/out/

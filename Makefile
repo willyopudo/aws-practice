@@ -9,6 +9,8 @@ COVERAGE_MIN ?= 80
 SH_FILES     := $(shell git ls-files --cached --others --exclude-standard '*.sh' '*.bash' '.githooks/*' 'tests/helpers/bin/*')
 TF_DIRS      := $(sort $(dir $(shell git ls-files --cached --others --exclude-standard '*.tf')))
 BATS_FILES   := $(shell find tests -name '*.bats' 2>/dev/null)
+# A Python lab is any dir with a requirements-dev.txt; each gets its own .venv (gitignored).
+PY_LABS      := $(patsubst %/requirements-dev.txt,%,$(shell git ls-files --cached --others --exclude-standard '*requirements-dev.txt'))
 
 KCOV_IMAGE   := aws-practice-kcov
 SONAR_IMAGE  := sonarsource/sonar-scanner-cli:11
@@ -16,7 +18,7 @@ SONAR_IMAGE  := sonarsource/sonar-scanner-cli:11
 TFLINT       := $(shell command -v tflint || echo docker run --rm -v "$(CURDIR):/data" -w /data ghcr.io/terraform-linters/tflint:v0.59.1)
 BRANCH       := $(shell git branch --show-current)
 
-.PHONY: check lint test coverage sonar sonar-local sonar-local-down clean
+.PHONY: check lint test coverage py-test py-coverage sonar sonar-local sonar-local-down clean
 
 check: lint test coverage sonar-local
 
@@ -25,7 +27,23 @@ lint:
 	terraform fmt -check -recursive
 	@for d in $(TF_DIRS); do $(TFLINT) --chdir="$$d" || exit 1; done
 
-test:
+# pytest per Python lab. Tests stub boto3 (botocore Stubber): no real AWS calls. No labs = no-op.
+py-test:
+	@for d in $(PY_LABS); do \
+	  [[ -x "$$d/.venv/bin/pytest" && "$$d/.venv/bin/pytest" -nt "$$d/requirements-dev.txt" ]] || { \
+	    python3 -m venv "$$d/.venv" && "$$d/.venv/bin/pip" install -q -r "$$d/requirements-dev.txt" && touch "$$d/.venv/bin/pytest"; }; \
+	  (cd "$$d" && .venv/bin/pytest -q) || exit 1; \
+	done
+
+# Same threshold as the shell scripts. Prints "<n>% (min <m>)" so quality-gate.sh can summarise it.
+py-coverage: py-test
+	@for d in $(PY_LABS); do \
+	  out=$$(cd "$$d" && .venv/bin/pytest -q --cov=. --cov-config="$(CURDIR)/tests/python.coveragerc" \
+	    --cov-report=term --cov-fail-under=$(COVERAGE_MIN)) || { echo "$$out"; exit 1; }; \
+	  echo "$$out"; echo "$$out" | awk '/^TOTAL/{print $$NF " (min $(COVERAGE_MIN))"}'; \
+	done
+
+test: py-test
 ifeq ($(BATS_FILES),)
 	@echo "no bats tests yet"
 else
@@ -33,7 +51,7 @@ else
 endif
 
 # kcov runs inside Docker: it is unreliable on macOS and this matches CI.
-coverage:
+coverage: py-coverage
 	@docker image inspect $(KCOV_IMAGE) >/dev/null 2>&1 || docker build -q -t $(KCOV_IMAGE) tests/docker >/dev/null
 	rm -rf coverage
 ifneq ($(BATS_FILES),)

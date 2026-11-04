@@ -1,0 +1,7 @@
+# Shared by `make py-coverage`: measure lab source, not its tests or virtualenv.
+[run]
+omit =
+    */test_*.py
+    */*_test.py
+    */conftest.py
+    */.venv/*
