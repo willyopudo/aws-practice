@@ -1,5 +1,6 @@
 import { App, Tags } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
+import { describe, expect, test } from '@jest/globals';
 import { S3LabStack } from '../lib/s3-lab-stack';
 
 function synth(): Template {
